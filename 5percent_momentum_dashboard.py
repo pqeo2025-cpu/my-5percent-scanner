@@ -34,7 +34,7 @@ for name, ticker in stocks.items():
         change = (price - float(df['Close'].iloc[-2])) / float(df['Close'].iloc[-2]) * 100
         vol_ratio = float(df['Volume'].iloc[-1] / df['Volume'].mean())
 
-        # Simple RSI Calculation (without extra libraries)
+        # Simple RSI
         delta = df['Close'].diff()
         gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
         loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
@@ -51,9 +51,14 @@ for name, ticker in stocks.items():
             "RSI": round(current_rsi, 1)
         })
     except:
-        pass
+        continue
 
 df_results = pd.DataFrame(data)
+
+# Safety check if no data
+if df_results.empty:
+    st.error("⚠️ No market data available right now (US markets closed today - Memorial Day). Please try again tomorrow.")
+    st.stop()
 
 filtered = df_results[
     (df_results["% Change"] >= min_change) & 
@@ -82,6 +87,8 @@ if not filtered.empty:
                     low=hist['Low'], close=hist['Close'])])
     fig.update_layout(title=f"{selected} - 15min Chart", height=650)
     st.plotly_chart(fig, use_container_width=True)
+else:
+    st.warning("No stocks match your current filters. Try lowering the Minimum % Change.")
 
 st.info("**Strategy**: Focus on green rows with high volume. Take 3-5% profit when possible.")
 st.warning("⚠️ Remember: 5% daily is very hard and risky. Trade small.")
